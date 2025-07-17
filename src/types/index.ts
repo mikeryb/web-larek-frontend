@@ -24,8 +24,6 @@ export interface ICardsData {
 
 export interface ICart {
 	cards: ICard[];
-	total: number;
-	count: number;
 }
 
 export interface ICartData {
