@@ -1,3 +1,4 @@
+
 export interface ICard {
 	id: string;
 	description: string;
@@ -11,15 +12,18 @@ export interface IOrder {
 	payment: string;
 	email: string;
 	phone: string;
-	adress: string;
+	address: string;
 	total: number;
 	items: string[];
 }
 
+export interface IOrderResult {
+	id: string;
+	total: number
+}
+
 export interface ICardsData {
 	cards: ICard[];
-	preview: string | null;
-	getCard(id: string): ICard;
 }
 
 export interface ICart {
@@ -27,10 +31,12 @@ export interface ICart {
 }
 
 export interface ICartData {
-	addCard(card: ICard): void;
-	deleteCard(id: string): void;
+	toggleCard(card: ICard): void;
 	clearCart(): void;
-	getCards(): ICard[];
+	getCards(): string[];
+	calculateAmount(): number;
+	calculateCount(): number;
+	isInCart(card: ICard): boolean;
 }
 
 export interface IOrderData {
@@ -39,6 +45,15 @@ export interface IOrderData {
   clearInfo(): void;
 }
 
-export type DeliveryInfo = Pick<IOrder, 'payment' | 'adress'>;
+export type DeliveryInfo = Pick<IOrder, 'payment' | 'address'>;
 
 export type ClientInfo = Pick<IOrder, 'email' | 'phone'>;
+
+export type Type = 'catalog' | 'preview' | 'basket';
+
+export type CategoryType =
+  | 'софт-скил'
+  | 'хард-скил'
+  | 'дополнительное'
+  | 'другое'
+  | 'кнопка';
