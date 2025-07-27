@@ -316,6 +316,12 @@ export class ModalOrder {
 			return null;
 		}
 	}
+
+	clearValues() {
+		this.fieldAddress.value = '';
+		this.setInactive(this.buttonCard);
+		this.setInactive(this.buttonCash);
+	}
 }
 
 export class ModalContacts {
@@ -380,6 +386,11 @@ export class ModalContacts {
 		this.errorMessage.textContent = isValid
 			? ''
 			: 'Пожалуйста, заполните все поля.';
+	}
+
+	clearValues() {
+		this.fieldEmail.value = '';
+		this.fieldPhone.value = '';
 	}
 }
 

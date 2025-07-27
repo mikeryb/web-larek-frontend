@@ -219,6 +219,7 @@ static createList(cards: ICard[], template: HTMLTemplateElement, events: EventEm
 - setActive (button: HTMLElement): void - делает кнопку способа оплаты активной
 - setInactive (button: HTMLElement): void - делает кнопку способа оплаты неактивной
 - getPaymentMethod(): string | null - получает значение выбранного метода оплаты
+- clearValues() - очищает значения полей ввода и снимает выбор с кнопок
 
 
 #### Класс ModalContacts
@@ -237,6 +238,7 @@ static createList(cards: ICard[], template: HTMLTemplateElement, events: EventEm
 
 - setValid(isValid: boolean): void - изменяет активность кнопки подтверждения
 - showErrors(isValid: boolean): void - выводит ошибку, если поля не заполнены
+- clearValues() - очищает значения полей ввода
 
 
 #### Класс ModalSuccess
