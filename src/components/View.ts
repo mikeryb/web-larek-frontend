@@ -4,11 +4,11 @@ import { cloneTemplate, createElement, ensureElement } from '../utils/utils';
 import { EventEmitter, IEvents } from './base/events';
 
 const CategoryClassMap: Record<CategoryType, string> = {
-	'софт-скил': 'card__category_soft',
-	'хард-скил': 'card__category_hard',
-	дополнительное: 'card__category_additional',
-	другое: 'card__category_other',
-	кнопка: 'card__category_button',
+	'софт-скил': 'card__category card__category_soft',
+	'хард-скил': 'card__category card__category_hard',
+	дополнительное: 'card__category card__category_additional',
+	другое: 'card__category card__category_other',
+	кнопка: 'card__category card__category_button',
 };
 
 export class Modal {
@@ -58,7 +58,7 @@ export class CardCatalog {
 		ensureElement('.card__title', this.element).textContent = card.title;
 		this.category.textContent = card.category;
 		const category = card.category as CategoryType;
-		this.category.classList.add(CategoryClassMap[category]);
+		this.category.className = CategoryClassMap[category];
 		ensureElement('.card__price', this.element).textContent =
 			card.price !== null ? `${card.price} синапсов` : 'Бесценно';
 		this.button.addEventListener('click', () => {
@@ -82,14 +82,11 @@ export class CardCatalog {
 export class CardPreview {
 	element: HTMLElement;
 	button: HTMLButtonElement;
-	private inCart: boolean;
 	category: HTMLElement;
 	image: HTMLImageElement;
 	title: HTMLElement;
 	price: HTMLElement;
 	description: HTMLElement;
-	private card: ICard;
-
 	constructor(
 		element: HTMLElement,
 		protected events: EventEmitter
@@ -104,29 +101,23 @@ export class CardPreview {
 		this.title = ensureElement('.card__title', this.element);
 		this.price = ensureElement('.card__price', this.element);
 		this.description = ensureElement('.card__text', this.element);		
-		
-		this.button.addEventListener('click', () => {
-		events.emit('card:toggle', this.card);
-		});	}
-
-	updateButton(): void {
-		this.button.textContent = this.inCart ? 'Убрать из корзины' : 'В корзину';
 	}
 
-	set InCart(value: boolean) {
-		this.inCart = value;
-		this.updateButton();
+	updateButton( isInCart:boolean ): void {
+		this.button.textContent = isInCart ? 'Убрать из корзины' : 'В корзину';
 	}
 
 	render(card:ICard){
-		this.card = card;
 		this.category.textContent = card.category;
 		const category = card.category as CategoryType;
-		this.category.classList.add(CategoryClassMap[category]);
+		this.category.className = CategoryClassMap[category];
 		this.image.src = CDN_URL + card.image;
 		this.title.textContent = card.title;
 		this.price.textContent = card.price !== null ? `${card.price} синапсов` : 'Бесценно';
 		this.description.textContent = card.description;
+		this.button.onclick = () => {
+		this.events.emit('card:toggle', card);
+	};
 	}
 }
 

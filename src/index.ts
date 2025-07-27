@@ -72,7 +72,7 @@ events.on('preview:changed', (card: ICard) => {
 
 events.on('card:preview', (card: ICard) => {
 	cardsData.preview = card;
-	preview.InCart = cartData.isInCart(cardsData.preview);
+	preview.updateButton(cartData.isInCart(cardsData.preview));
 });
 
 events.on('cart:changed', () => {
@@ -84,7 +84,7 @@ events.on('cart:changed', () => {
 	cart.total = cartData.calculateAmount().toString();
 	cart.setValid(cartData.calculateAmount() > 0);
 	page.counter = cartData.calculateCount();
-	preview.InCart = cartData.isInCart(cardsData.preview);
+	preview.updateButton(cartData.isInCart(cardsData.preview));
 });
 
 events.on('cart:open', () => {
