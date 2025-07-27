@@ -12,6 +12,7 @@
   padding-top: 5vh;
   padding-bottom: 5vh;
   box-sizing: border-box;
+  overflow: scroll;
 
   &_active {
     display: flex;
