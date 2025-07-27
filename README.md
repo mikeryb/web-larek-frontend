@@ -71,6 +71,7 @@ yarn build
 В полях класса хранятся следующие данные:
 - cards: ICard[] - массив объектов карточек товаров
 - events: IEvents - экземпляр класса `EventEmitter` для инициации событий при изменении данных.
+- _preview: ICard - экземпляр карты, выбранный для показа в модальном окне превью
 
 Так же класс предоставляет сеттеры и геттеры для взаимодействия с этими данными
 
@@ -146,12 +147,19 @@ static createList(cards: ICard[], template: HTMLTemplateElement, events: EventEm
 - button: HTMLButtonElement - кнопка добавления/удаления карточки в корзину
 - inCart: boolean - определяет находится ли карточка в корзине
 - category: HTMLElement - категория товара, для добавления класса категории
+- image: HTMLImageElement - элемент верстки картинки товара
+- title: HTMLElement - элемент верстки названия товара
+- price: HTMLElement - элемент верстки цены товара
+- description: HTMLElement - элемент верстки описания товара
+- private card: ICard - данные карточки товара
 
 Методы класса:
 
 	updateButton(): void - меняет текст кнопки
 
 	set InCart(value: boolean) - меняет поле наличия в корзине и вызывает метод updateButton() для изменения текста
+
+	render(card:ICard) - рендерит экземпляр класса с заполненными данными товара
 
 ### Класс CardBasket
 Класс отвечает за отображение карточки, находящейся в корзине
@@ -206,14 +214,12 @@ static createList(cards: ICard[], template: HTMLTemplateElement, events: EventEm
 
 Методы класса:
 
-- set value - устанавливает значение в поле ввода
 - setValid(isValid: boolean): void - изменяет активность кнопки подтверждения 
 - showErrors(isValid: boolean): void - выводит ошибку, если поля не заполнены
 - setActive (button: HTMLElement): void - делает кнопку способа оплаты активной
 - setInactive (button: HTMLElement): void - делает кнопку способа оплаты неактивной
 - getPaymentMethod(): string | null - получает значение выбранного метода оплаты
-- set paymentMethod(method: 'card' | 'cash') - устанавливает метод оплаты
-- focusAddress(): void - устанавливает фокус в инпут
+
 
 #### Класс ModalContacts
 Класс отвечает за отображение в модальном окне разметки формы для заполнения данных по контактам клиента. В конструктор принимает template-шаблон.
@@ -228,9 +234,7 @@ static createList(cards: ICard[], template: HTMLTemplateElement, events: EventEm
 
 Методы класса:
 
-- set phone(value: string) - устанавливает значение в инпут телефона
-- set email(value: string) - устанавливает значение в инпут почты
-- focusAddress(field: string): void - устанавливает фокус в переданное поле
+
 - setValid(isValid: boolean): void - изменяет активность кнопки подтверждения
 - showErrors(isValid: boolean): void - выводит ошибку, если поля не заполнены
 
@@ -278,15 +282,57 @@ static createList(cards: ICard[], template: HTMLTemplateElement, events: EventEm
 
 Список всех событий, которые могут генерироваться в системе:
 
-- `card:select` - отрисовывает модуль превью карточки
-- `cart:open` - открывает корзину при нажатии кнопки корзины
-- `cart:changed` - возникает при изменении состава корзины 
-- `order:open` - открывает модальное окно заказа при сабмите в корзине
-- `order:input` - возникает при вводе в поле формы
-- `order:changed` - возникает при сабмите формы
+События класса `CardsData`
+
+- `cards:changed` - изменение массива карточек. Событие происходит при загрузке данных из API
+- `preview:changed` - изменение открываемой в модальном окне карточки товара. Событие происходит при выборе товара для предпросмотра
+
+События класса `CardCatalog`
+
+- `card:preview` - возникает при нажатии на карточку товара(открытие карточки в модальном окне)
+
+События класса `CartData`
+
+- `cart:changed` - возникает при любом изменении состава корзины
+
+События класса `MainPage`
+
+- `cart:open` - возникает при нажатии на кнопку корзины на главной странице
+
+События класса `Modal` 
+
+- `modal:open` - возникает при открытии модального окна
+- `modal:close` - возникает при закрытии модального окна
+
+События класса `CardPreview`
+
+- `card:toggle` - возникает при добавлении/удалении товара в корзину. Также возникает при удаленн товара из корзины в классе ModalCart
+
+События класса `ModalCart`
+
+- `card:toggle` - возникает при удалении товара из корзины
+- `order:open` - возникает при сабмите заказа в корзине
+
+События класса `ModalOrder`
+
+- `order:changed` - возникает при сабмите в форме адресных данных
+- `order:input` - возникает при любом вводе в форме адресных данных
+
+События класса `OrderData`
+
+- `contacts:open` - возникает при установке адресных данных
+- `order:send` - возникает при установке контактных данных
+
+События класса `ModalContacts`
+
 - `contacts:input` - возникает при вводе в поля формы
 - `contacts:submit` - возникает при сабмите в форме
-- `modal:close` - возникает при закрытии модального окна
+
+События класса `ModalOrder`
+
+- `order:input` - возникает при вводе в поле формы
+- `order:submit` - возникает при сабмите формы
+
 
 
 
@@ -298,3 +344,14 @@ static createList(cards: ICard[], template: HTMLTemplateElement, events: EventEm
 
 - реализуется логика обработки этих событий
 
+Пример взаимодействия: Обновление счётчика корзины
+
+- Пользователь нажимает кнопку «В корзину» в карточке товара (CardPreviw)
+
+- Компонент генерирует событие card.toggle, передавая объект товара
+
+- CartData обновляет список товаров и инициирует событие cart:changed
+
+- Обработчик в index.ts вызывает метод setCounter у MainPage, передавая новое значение
+
+- MainPage обновляет DOM-элемент .header__basket-counter

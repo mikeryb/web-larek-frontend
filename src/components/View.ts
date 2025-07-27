@@ -62,7 +62,7 @@ export class CardCatalog {
 		ensureElement('.card__price', this.element).textContent =
 			card.price !== null ? `${card.price} синапсов` : 'Бесценно';
 		this.button.addEventListener('click', () => {
-			events.emit('card:select', card);
+			events.emit('card:preview', card);
 		});
 	}
 
@@ -84,9 +84,13 @@ export class CardPreview {
 	button: HTMLButtonElement;
 	private inCart: boolean;
 	category: HTMLElement;
+	image: HTMLImageElement;
+	title: HTMLElement;
+	price: HTMLElement;
+	description: HTMLElement;
+	private card: ICard;
 
 	constructor(
-		card: ICard,
 		element: HTMLElement,
 		protected events: EventEmitter
 	) {
@@ -96,21 +100,14 @@ export class CardPreview {
 			this.element
 		);
 		this.category = ensureElement('.card__category', this.element);
-		this.category.textContent = card.category;
-		const category = card.category as CategoryType;
-		this.category.classList.add(CategoryClassMap[category]);
-		ensureElement<HTMLImageElement>('.card__image', this.element).src =
-			CDN_URL + card.image;
-		ensureElement('.card__title', this.element).textContent = card.title;
-
-		ensureElement('.card__text', this.element).textContent = card.description;
-		ensureElement('.card__price', this.element).textContent =
-			card.price !== null ? `${card.price} синапсов` : 'Бесценно';
+		this.image = ensureElement<HTMLImageElement>('.card__image', this.element);	 
+		this.title = ensureElement('.card__title', this.element);
+		this.price = ensureElement('.card__price', this.element);
+		this.description = ensureElement('.card__text', this.element);		
+		
 		this.button.addEventListener('click', () => {
-			this.events.emit('cart:changed', card);
-			this.events.emit('card:select', card);
-		});
-	}
+		events.emit('card:toggle', this.card);
+		});	}
 
 	updateButton(): void {
 		this.button.textContent = this.inCart ? 'Убрать из корзины' : 'В корзину';
@@ -119,6 +116,17 @@ export class CardPreview {
 	set InCart(value: boolean) {
 		this.inCart = value;
 		this.updateButton();
+	}
+
+	render(card:ICard){
+		this.card = card;
+		this.category.textContent = card.category;
+		const category = card.category as CategoryType;
+		this.category.classList.add(CategoryClassMap[category]);
+		this.image.src = CDN_URL + card.image;
+		this.title.textContent = card.title;
+		this.price.textContent = card.price !== null ? `${card.price} синапсов` : 'Бесценно';
+		this.description.textContent = card.description;
 	}
 }
 
@@ -147,8 +155,7 @@ export class CardBasket {
 			card.price !== null ? `${card.price} синапсов` : 'Бесценно';
 		this.counter.textContent = index.toString();
 		this.button.addEventListener('click', () => {
-			this.events.emit('cart:changed', card);
-			this.events.emit('cart:open', card);
+			this.events.emit('card:toggle', card);
 		});
 	}
 
@@ -177,7 +184,7 @@ export class ModalCart {
 	protected _total: HTMLElement;
 	protected _button: HTMLButtonElement;
 	protected items: HTMLElement[];
-	protected container: HTMLElement;
+	container: HTMLElement;
 
 	constructor(container: HTMLElement, protected events: EventEmitter) {
 		this.container = container;
@@ -282,10 +289,6 @@ export class ModalOrder {
 		});
 	}
 
-	set value(value: string) {
-		this.fieldAddress.value = value;
-	}
-
 	setValid(isValid: boolean): void {
 		this.submitBtn.disabled = !isValid;
 	}
@@ -312,20 +315,6 @@ export class ModalOrder {
 		} else {
 			return null;
 		}
-	}
-
-	set paymentMethod(method: 'card' | 'cash') {
-		if (method === 'card') {
-			this.setActive(this.buttonCard);
-			this.setInactive(this.buttonCash);
-		} else if (method === 'cash') {
-			this.setActive(this.buttonCash);
-			this.setInactive(this.buttonCard);
-		} else return;
-	}
-
-	focusAddress(): void {
-		this.fieldAddress.focus();
 	}
 }
 
@@ -381,21 +370,7 @@ export class ModalContacts {
 		});
 	}
 
-	set phone(value: string) {
-		this.fieldPhone.value = value;
-	}
 
-	set email(value: string) {
-		this.fieldEmail.value = value;
-	}
-
-	focusAddress(field: string): void {
-		if (field === 'phone') {
-			this.fieldPhone.focus();
-		} else {
-			this.fieldEmail.focus();
-		}
-	}
 
 	setValid(isValid: boolean): void {
 		this.submitBtn.disabled = !isValid;

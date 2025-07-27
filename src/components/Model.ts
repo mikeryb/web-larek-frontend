@@ -12,6 +12,7 @@ import { IEvents } from './base/events';
 export class CardsData implements ICardsData {
 	protected _cards: ICard[];
 	protected events: IEvents;
+	protected _preview: ICard;
 
 	constructor(events: IEvents) {
 		this.events = events;
@@ -20,6 +21,15 @@ export class CardsData implements ICardsData {
 	set cards(cards: ICard[]) {
 		this._cards = cards;
 		this.events.emit('cards:changed');
+	}
+
+	set preview(card: ICard) {
+		this._preview = card;
+		this.events.emit('preview:changed', this._preview);
+	}
+
+	get preview() {
+		return this._preview;
 	}
 
 	get cards() {
@@ -42,10 +52,12 @@ export class CartData implements ICartData {
 	} else {
 		this._cards.push(card);
 	}
+	this.events.emit('cart:changed');
 	}
 
 	clearCart(): void {
 		this._cards = [];
+		this.events.emit('cart:changed');
 	}
 
 	getCards(): string[] {
@@ -83,11 +95,13 @@ export class OrderData implements IOrderData {
 	setDeliveryInfo(deliveryInfo: DeliveryInfo): void {
 		this.payment = deliveryInfo.payment;
 		this.address = deliveryInfo.address;
+		this.events.emit('contacts:open');
 	}
 
 	setClientInfo(clientInfo: ClientInfo): void {
 		this.email = clientInfo.email;
 		this.phone = clientInfo.phone;
+		this.events.emit('order:send');
 	}
 
 	clearInfo(): void {
@@ -116,6 +130,10 @@ set lots(items: string[]) {
 
 set total(total:number) {
  this._total = total;
+}
+
+get total() {
+ return this._total
 }
 
 }

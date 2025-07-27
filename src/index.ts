@@ -25,11 +25,6 @@ api
 	.getItems()
 	.then((items: ICard[]) => {
 		cardsData.cards = items;
-		page.catalog = CardCatalog.createList(
-			cardsData.cards,
-			cardCatalogTemplate,
-			events
-		);
 	})
 	.catch((err) => {
 		console.error(err);
@@ -49,78 +44,99 @@ const cardsData = new CardsData(events);
 const cartData = new CartData(events);
 const orderData = new OrderData(events);
 
-
+// Глобальные контейнеры
 const page = new MainPage(events);
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
 
+// Переиспользуемые части интерфейса
 
-events.on('card:select', (card: ICard) => {
-	const newCard = new CardPreview(card,cloneTemplate(cardPreviewTemplate), events)
-	newCard.InCart = cartData.isInCart(card);
-	modal.content = newCard.element;
+const preview = new CardPreview(cloneTemplate(cardPreviewTemplate), events);
+const cart = new ModalCart(cloneTemplate(basketTemplate), events);
+const order = new ModalOrder(cloneTemplate(orderTemplate), events);
+const contacts = new ModalContacts(cloneTemplate(contactsTemplate), events);
+const success = new ModalSuccess(cloneTemplate(successTemplate), events);
+
+events.on('cards:changed', () => {
+	page.catalog = CardCatalog.createList(
+			cardsData.cards,
+			cardCatalogTemplate,
+			events
+		);
+})
+
+events.on('preview:changed', (card: ICard) => {
+	preview.render(card);
+	modal.content = preview.element;
 	modal.open();
-});
+})
+
+events.on('card:preview', (card: ICard) => {
+	cardsData.preview = card;
+	preview.InCart = cartData.isInCart(cardsData.preview)
+})
+
+events.on('cart:changed', () => {
+cart.goods = CardBasket.createList(cartData._cards, cardBasketTemplate, events);
+cart.total = cartData.calculateAmount().toString();
+cart.setValid(cartData.calculateAmount() > 0);
+page.counter = cartData.calculateCount();
+preview.InCart = cartData.isInCart(cardsData.preview);
+
+})
 
 events.on('cart:open', () => {
-	const cards = CardBasket.createList(cartData._cards, cardBasketTemplate, events);
-	const modalCart = new ModalCart(cloneTemplate(basketTemplate), events);
-	modalCart.goods = cards;
-	modalCart.total = cartData.calculateAmount().toString();
-	modalCart.setValid(cartData.calculateAmount() != 0);
-	modal.content = modalCart.render(cards);
-	modal.open();
-});
-
-events.on('cart:changed', (card: ICard) => {
-	cartData.toggleCard(card);
-	page.counter = cartData.calculateCount();	
-});
-
-events.on('order:open', () => {
-	orderData.lots = cartData.getCards();
-	orderData.total = cartData.calculateAmount();
-	modal.content = new ModalOrder(cloneTemplate(orderTemplate), events).element;
+	modal.content = cart.container;
+	cart.setValid(cartData.calculateAmount() > 0);
 	modal.open();
 })
 
-events.on('order:input', (data: { value: string, payment: 'card' | 'cash' }) => {
-	const content = new ModalOrder(cloneTemplate(orderTemplate), events);
-	content.showErrors(data.value != '');
-	content.setValid((data.value != '') && (data.payment != null));
-	content.paymentMethod = data.payment;
-	content.value = data.value;
-	modal.content = content.element;
-	content.focusAddress();
-});
-
-events.on('order:changed', (data: { payment: 'card' | 'cash', address: string }) => {
-	orderData.setDeliveryInfo(data);
-	const content = new ModalContacts(cloneTemplate(contactsTemplate), events);
-	modal.content = content.element;
-})
-
-events.on('contacts:input', (data: { email: string, phone: string, field: string }) => {
-	const content = new ModalContacts(cloneTemplate(contactsTemplate), events);
-	content.setValid((data.email != '') && (data.phone != ''));
-	content.showErrors((data.email != '') && (data.phone != ''));
-	content.phone = data.phone;
-	content.email = data.email;
-	modal.content = content.element;	
-	content.focusAddress(data.field);
-})
-
-events.on('contacts:submit', (data: { email: string, phone: string }) => {
-	orderData.setClientInfo(data);
-	api.postOrder(orderData.orderData).then( () => {
-	const content = new ModalSuccess(cloneTemplate(successTemplate), events);
-	content.setTotal(cartData.calculateAmount());
-	modal.content = content.element;
-	cartData.clearCart();
-	page.counter = 0;})
-	.catch((err) => console.log(err))
+events.on('modal:open', () => {
+	modal.open();
 })
 
 events.on('modal:close', () => {
 	modal.close();
-	modal.content = null;
-});
+})
+
+events.on('card:toggle', (card:ICard)  => {
+	cartData.toggleCard(card);
+})
+
+events.on('order:open', () => {
+	modal.content = order.element;
+	modal.open();
+})
+
+events.on('order:input', (data: { value: string, payment: 'card' | 'cash' }) => {
+	order.showErrors(data.value != '');
+	order.setValid((data.value != '') && (data.payment != null));
+})
+
+events.on('order:changed', (data: { payment: 'card' | 'cash', address: string }) => {
+	orderData.setDeliveryInfo(data);
+})
+
+events.on('contacts:open', () => {
+	modal.content = contacts.element;
+	modal.open();
+})
+
+events.on('contacts:input', (data: { email: string, phone: string, field: string }) => {
+	contacts.setValid((data.email != '') && (data.phone != ''));
+	contacts.showErrors((data.email != '') && (data.phone != ''));
+})
+
+events.on('contacts:submit', (data: { email: string, phone: string }) => {
+	orderData.total = cartData.calculateAmount();
+	orderData.lots = cartData.getCards();
+	orderData.setClientInfo(data);
+})
+
+events.on('order:send', () => {
+	 api.postOrder(orderData.orderData).then ( () => {	
+	success.setTotal(cartData.calculateAmount());
+	modal.content = success.element;
+	cartData.clearCart();
+	page.counter = 0;})
+	.catch((err) => console.log(err)) 
+})
